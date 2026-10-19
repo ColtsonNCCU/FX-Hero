@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戰鬥吧！FX勇士 - Fight! FX Warrior</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        
+        .pulse-red {
+            animation: pulse-border 1s infinite alternate;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.4); }
+            100% { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.9); }
+        }
+
+        #news-container {
+            position: relative;
+            width: 100%;
+            height: 24px;
+            overflow: hidden;
+        }
+        .news-item {
+            position: absolute;
+            top: 2px;
+            white-space: nowrap;
+            will-change: transform;
+            font-weight: bold;
+            font-size: 0.75rem;
+            line-height: 1.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans select-none min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- ========================================== -->
+    <!-- 1. 載入畫面 (Loading Screen) -->
+    <!-- ========================================== -->
+    <div id="loading-screen" class="fixed inset-0 bg-gray-950 z-50 flex flex-col items-center justify-center p-4">
+        <div class="text-3xl font-extrabold text-indigo-400 mb-8 tracking-wider flex items-center gap-2">
+            <span>📈</span> 戰鬥吧！FX勇士
+        </div>
+        <div class="w-80 bg-gray-800 h-4 rounded-full overflow-hidden mb-4 border border-gray-700">
+            <div id="loading-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300 ease-out"></div>
+        </div>
+        <div class="text-gray-400 text-sm font-mono tracking-widest">載入中...</div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. 警語頁面 (Disclaimer Screen) -->
+    <!-- ========================================== -->
+    <div id="warning-screen" class="hidden fixed inset-0 bg-black/95 z-40 flex flex-col items-center justify-center p-6 text-center">
+        <div class="max-w-2xl bg-gray-900/90 border-2 border-red-600 rounded-2xl p-8 shadow-2xl backdrop-blur">
+            <h1 class="text-4xl font-extrabold text-red-500 mb-6 tracking-wide flex items-center justify-center gap-2">
+                <span>⚠️</span> 警告
+            </h1>
+            
+            <div class="text-red-400 space-y-3 leading-relaxed text-base font-medium mb-8 bg-red-950/30 p-6 rounded-xl border border-red-900/50">
+                <p>本遊戲純屬虛構</p>
+                <p>遊戲中出現之人物、機構及事件均與現實無關</p>
+                <p>如有雷同純屬巧合</p>
+                <hr class="border-red-900/40 my-3">
+                <p>本遊戲並不鼓勵玩家在現實進行FX交易</p>
+                <p>FX屬於高風險金融商品</p>
+                <p>損失有可能超過投入之本金</p>
+                <p>過度交易可能會影響日常生活</p>
+                <p>請在充分考慮後再謹慎進行</p>
+            </div>
+
+            <p class="text-2xl font-black text-red-500 mb-8 tracking-wider animate-bounce">
+                🔥 你做好墜入深淵的覺悟了嗎？ 🔥
+            </p>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button onclick="window.open('https://youtu.be/Sahe_qF0tYQ?si=biVPMh1aC6ZsegOA', '_blank')" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-bold transition border border-gray-700">
+                    😨 有點害怕……
+                </button>
+                <button onclick="acceptWarning()" class="px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-extrabold transition shadow-lg shadow-red-900/50">
+                    🚀 準備萬全！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. 簡略版教程彈窗 (Quick Tutorial Modal) -->
+    <!-- ========================================== -->
+    <div id="quick-tutorial-modal" class="hidden fixed inset-0 bg-black/80 z-30 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-indigo-500/50 max-w-lg w-full rounded-2xl p-6 shadow-2xl">
+            <h2 class="text-xl font-bold text-indigo-400 mb-4 flex items-center gap-2 border-b border-gray-800 pb-3">
+                <span>📖</span> 歡迎來到《戰鬥吧！FX勇士》- 快速指南
+            </h2>
+            <div class="space-y-4 text-sm text-gray-300 mb-6">
+                <div class="bg-gray-800/60 p-3 rounded-lg border border-gray-700">
+                    <strong class="text-white block mb-1">1. 看準走勢 (圖表)</strong>
+                    觀察 K 線走勢與突發新聞，預測匯率上漲或下跌。
+                </div>
+                <div class="bg-gray-800/60 p-3 rounded-lg border border-gray-700">
+                    <strong class="text-white block mb-1">2. 下單交易 (做多 / 做空)</strong>
+                    看漲點 <span class="text-red-400 font-bold">[BUY 做多]</span>；看跌點 <span class="text-green-400 font-bold">[SELL 做空]</span>。1 枚代表 10,000 單位貨幣。
+                </div>
+                <div class="bg-gray-800/60 p-3 rounded-lg border border-gray-700">
+                    <strong class="text-white block mb-1">3. 注意維持率 (爆倉防禦)</strong>
+                    槓桿能放大收益，但虧損過大導致維持率過低時，會觸發強制平倉！
+                </div>
+                <p class="text-xs text-indigo-300">💡 提示：隨時可點擊主頁左上角 <span class="font-bold">[❓ 完整教程]</span> 查看詳細專業術語說明！</p>
+            </div>
+            <button onclick="closeQuickTutorial()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition">
+                了解！進入主頁
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. 完整版教程彈窗 (Academic Knowledge Base Modal) -->
+    <!-- ========================================== -->
+    <div id="full-tutorial-modal" class="hidden fixed inset-0 bg-black/85 z-40 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-700 max-w-4xl w-full h-[80vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 bg-gray-950 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-indigo-400 flex items-center gap-2">
+                    <span>📚</span> FX 交易與金融經濟學完整百科
+                </h2>
+                <button onclick="toggleFullTutorial(false)" class="text-gray-400 hover:text-white px-3 py-1 bg-gray-800 rounded-lg">關閉 ✕</button>
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-1/3 bg-gray-950/60 border-r border-gray-800 p-2 space-y-1 overflow-y-auto text-sm">
+                    <button onclick="switchTab('margin')" class="tab-btn active w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 保證金與槓桿機制</button>
+                    <button onclick="switchTab('direction')" class="tab-btn w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 做多 (BUY) 與做空 (SELL)</button>
+                    <button onclick="switchTab('lots')" class="tab-btn w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 交易規模 (Lots & 'Mai')</button>
+                    <button onclick="switchTab('liquidation')" class="tab-btn w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 維持率與清算邊界</button>
+                    <button onclick="switchTab('pips')" class="tab-btn w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 匯率點數 (Pips Precision)</button>
+                    <button onclick="switchTab('news')" class="tab-btn w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 新聞與黑天鵝衝擊</button>
+                    <button onclick="switchTab('rumi')" class="tab-btn w-full text-left p-3 rounded-xl hover:bg-gray-800 text-gray-300 transition">🔹 交易助手露米狀態</button>
+                </div>
+                <div id="tutorial-content" class="w-2/3 p-6 overflow-y-auto text-sm text-gray-300 leading-relaxed space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. 遊戲主頁面 (Main Menu) -->
+    <!-- ========================================== -->
+    <div id="main-menu" class="hidden min-h-screen flex flex-col justify-between p-6 max-w-6xl mx-auto w-full">
+        <div class="flex justify-between items-center">
+            <button onclick="toggleFullTutorial(true)" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-indigo-300 border border-gray-700 rounded-xl font-bold flex items-center gap-2 text-sm transition">
+                <span>❓</span> 完整教程
+            </button>
+            <div class="text-xs text-gray-500 font-mono">v5.7 Continuous Open/Close Resampling Fix</div>
+        </div>
+
+        <div class="text-center my-6">
+            <h1 class="text-5xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-indigo-400 to-amber-400 mb-2">
+                戰鬥吧！FX勇士
+            </h1>
+            <p class="text-gray-400 text-sm tracking-wider font-mono">FIGHT! FX WARRIOR: MARGIN CALL CRISIS</p>
+        </div>
+
+        <div class="my-auto">
+            <div id="mode-cards" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onclick="selectMode('challenge')" class="bg-gray-800/80 hover:bg-gray-800 border-2 border-gray-700 hover:border-indigo-500 rounded-2xl p-6 cursor-pointer transition flex flex-col justify-between h-64 group shadow-lg">
+                    <div>
+                        <div class="text-3xl mb-3">🎯</div>
+                        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition">挑戰模式</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">追求特定資產目標！包含「FX新手」、「散戶玩家」、「投資專家」三種難度等級。</p>
+                    </div>
+                    <div class="text-right text-xs font-bold text-indigo-400">點擊選擇難度 ➔</div>
+                </div>
+
+                <div onclick="selectMode('time')" class="bg-gray-800/80 hover:bg-gray-800 border-2 border-gray-700 hover:border-amber-500 rounded-2xl p-6 cursor-pointer transition flex flex-col justify-between h-64 group shadow-lg">
+                    <div>
+                        <div class="text-3xl mb-3">⏱️</div>
+                        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-amber-400 transition">限時模式</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">在有限的時間（3分/5分/10分）內挑戰獲利極限！採用標準難度規則。</p>
+                    </div>
+                    <div class="text-right text-xs font-bold text-amber-400">點擊選擇時限 ➔</div>
+                </div>
+
+                <div onclick="selectMode('endless')" id="card-endless" class="bg-gray-800/80 hover:bg-gray-800 border-2 border-gray-700 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer transition flex flex-col justify-between h-64 group shadow-lg">
+                    <div>
+                        <div class="text-3xl mb-3">♾️</div>
+                        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition">無盡模式</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">沒有時間與目標限制，考驗滾雪球極限！隨時可離場結算，採用標準難度規則。</p>
+                    </div>
+                    <div class="text-right text-xs font-bold text-emerald-400">點擊直接開始 ➔</div>
+                </div>
+            </div>
+
+            <div id="sub-options" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+
+        <div class="flex flex-col items-center gap-4 mt-8">
+            <button id="btn-back" onclick="resetToModeSelect()" class="hidden text-sm text-gray-400 hover:text-white underline">
+                ⬅️ 返回選擇其他模式
+            </button>
+            <button id="btn-start-game" onclick="startGame()" class="hidden px-12 py-4 bg-gradient-to-r from-red-600 to-indigo-600 hover:from-red-500 hover:to-indigo-500 text-white font-black text-xl rounded-2xl shadow-xl transition transform hover:scale-105 tracking-wider">
+                🚀 開始交易 (START)
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 6. 遊戲主 UI 介面 (In-Game Screen) -->
+    <!-- ========================================== -->
+    <div id="game-screen" class="hidden min-h-screen flex flex-col justify-between bg-gray-950">
+        <div class="bg-gray-900 border-b border-gray-800 p-3 flex flex-wrap justify-between items-center text-xs md:text-sm font-mono gap-2">
+            <div class="flex gap-4">
+                <div>淨值: <span id="val-balance" class="text-white font-bold">￥300,000</span> JPY</div>
+                <div>可用保證金: <span id="val-avail-margin" class="text-gray-300">￥300,000</span></div>
+                <div>已用保證金: <span id="val-used-margin" class="text-gray-300">￥0</span></div>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div id="target-display" class="text-indigo-400 font-bold hidden">🎯 目標: ￥20,000,000</div>
+                <div id="timer-display" class="text-amber-400 font-bold hidden">⏱️ 00:00</div>
+                
+                <div>未實現盈虧: <span id="val-unrealized" class="font-bold text-gray-300">￥0</span></div>
+                <div class="bg-gray-800 px-3 py-1 rounded border border-gray-700">
+                    維持率: <span id="val-margin-ratio" class="font-black text-emerald-400">100.0%</span>
+                </div>
+                <button id="btn-endless-leave" onclick="showLeaveModal()" class="hidden px-3 py-1 bg-red-900/60 hover:bg-red-800 border border-red-700 text-red-200 rounded font-sans text-xs transition">
+                    🚪 離場結算
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 p-2">
+            <div class="lg:col-span-8 bg-gray-900 border border-gray-800 rounded-xl p-2 flex flex-col justify-between relative overflow-hidden">
+                <div class="flex justify-between items-center mb-1 text-xs font-mono px-2">
+                    <div class="flex items-center gap-2">
+                        <span id="chart-pair-name" class="font-bold text-indigo-400 text-sm">USD/JPY</span>
+                        <span id="chart-current-price" class="font-extrabold text-white text-sm">150.00</span>
+                    </div>
+                    <div class="flex items-center gap-1 bg-gray-800 p-0.5 rounded border border-gray-700">
+                        <span class="text-gray-400 px-1">週期:</span>
+                        <button onclick="setCandleInterval(5)" id="btn-period-5" class="px-2 py-0.5 bg-indigo-600 text-white rounded font-bold">5s</button>
+                        <button onclick="setCandleInterval(10)" id="btn-period-10" class="px-2 py-0.5 bg-gray-700 text-gray-300 hover:text-white rounded font-bold">10s</button>
+                        <button onclick="setCandleInterval(20)" id="btn-period-20" class="px-2 py-0.5 bg-gray-700 text-gray-300 hover:text-white rounded font-bold">20s</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 relative w-full h-[360px]">
+                    <canvas id="klineCanvas" class="w-full h-full block rounded"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 flex flex-col gap-2">
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs space-y-3">
+                    <div class="font-bold text-gray-300 border-b border-gray-800 pb-1 flex justify-between">
+                        <span>下單交易面板</span>
+                        <span id="mode-tag" class="text-indigo-400 font-normal">標準難度</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-gray-400 block mb-1">基準幣</label>
+                            <select id="sel-base" onchange="onCurrencySelectChange()" class="w-full bg-gray-800 border border-gray-700 rounded p-1 text-white"></select>
+                        </div>
+                        <div>
+                            <label class="text-gray-400 block mb-1">計價幣</label>
+                            <select id="sel-quote" onchange="onCurrencySelectChange()" class="w-full bg-gray-800 border border-gray-700 rounded p-1 text-white"></select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-gray-400 block mb-1">槓桿倍數 (1-1000)</label>
+                            <input type="number" id="input-leverage" min="1" max="1000" value="100" oninput="calcMarginEstimate()" class="w-full bg-gray-800 border border-gray-700 rounded p-1 text-white font-mono">
+                        </div>
+                        <div>
+                            <label class="text-gray-400 block mb-1">下單數量 (枚)</label>
+                            <input type="number" id="input-lots" min="0.1" step="0.1" value="1.0" oninput="calcMarginEstimate()" class="w-full bg-gray-800 border border-gray-700 rounded p-1 text-white font-mono">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-950 p-2 rounded border border-gray-800 flex justify-between items-center font-mono">
+                        <span class="text-gray-400">💡 預估保證金:</span>
+                        <span id="est-margin" class="font-bold text-amber-400">￥15,000</span>
+                    </div>
+
+                    <div id="tpsl-container" class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-gray-400 block mb-1">止盈 (TP pips)</label>
+                            <input type="number" id="input-tp" placeholder="無" class="w-full bg-gray-800 border border-gray-700 rounded p-1 text-white font-mono">
+                        </div>
+                        <div>
+                            <label class="text-gray-400 block mb-1">止損 (SL pips)</label>
+                            <input type="number" id="input-sl" placeholder="無" class="w-full bg-gray-800 border border-gray-700 rounded p-1 text-white font-mono">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="executeOrder('BUY')" class="py-2.5 bg-red-600 hover:bg-red-500 text-white font-black rounded-lg text-sm shadow">
+                            BUY (做多)
+                        </button>
+                        <button onclick="executeOrder('SELL')" class="py-2.5 bg-green-600 hover:bg-green-500 text-white font-black rounded-lg text-sm shadow">
+                            SELL (做空)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-gray-900 border border-gray-800 rounded-xl p-3 flex flex-col justify-between items-center relative overflow-hidden">
+                    <div class="w-full bg-gray-800 border border-indigo-500/30 p-2 rounded-xl text-xs text-indigo-200 mb-2 shadow relative">
+                        <div id="rumi-dialogue">露米：「今天也要一起加油，衝向 2,000 萬嗎？！」</div>
+                    </div>
+
+                    <div class="w-32 h-32 relative my-auto flex items-center justify-center">
+                        <img id="rumi-avatar" src="assets/0100/0100_happy.png" alt="Rumi" class="max-w-full max-h-full object-contain drop-shadow-md transition-all duration-200" onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=Rumi';" />
+                    </div>
+
+                    <div class="text-[10px] text-gray-500 font-mono">交易助手：露米 (Rumi)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-900 border-t border-b border-gray-800 py-1.5 px-4 text-xs font-mono flex items-center">
+            <span class="text-amber-400 font-bold mr-3 shrink-0">速報 📢</span>
+            <div id="news-container" class="flex-1"></div>
+        </div>
+
+        <div class="bg-gray-900 border-t border-gray-800 flex-1 max-h-48 flex flex-col p-2 text-xs">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-1 mb-2">
+                <div class="flex gap-2">
+                    <button id="tab-btn-pos" onclick="switchBottomTab('positions')" class="px-3 py-1 bg-gray-800 text-indigo-400 rounded font-bold">當前持倉列表</button>
+                    <button id="tab-btn-hist" onclick="switchBottomTab('history')" class="px-3 py-1 bg-gray-950 text-gray-400 rounded font-bold">歷史交易紀錄</button>
+                </div>
+                <button onclick="closeAllPositions('手動一鍵全平')" class="px-3 py-1 bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 rounded font-bold">
+                    ⚡ 一鍵全平
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                <table id="table-positions" class="w-full text-left border-collapse">
+                    <thead class="text-gray-500 sticky top-0 bg-gray-900">
+                        <tr class="border-b border-gray-800">
+                            <th class="p-1">開倉時間</th><th class="p-1">交易對</th><th class="p-1">方向</th><th class="p-1">枚數</th><th class="p-1">開倉價</th><th class="p-1">當前價</th><th class="p-1">浮動盈虧(JPY)</th><th class="p-1">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-positions" class="font-mono text-gray-300 divide-y divide-gray-800/50"></tbody>
+                </table>
+
+                <table id="table-history" class="w-full text-left border-collapse hidden">
+                    <thead class="text-gray-500 sticky top-0 bg-gray-900">
+                        <tr class="border-b border-gray-800">
+                            <th class="p-1">平倉時間</th><th class="p-1">交易對</th><th class="p-1">方向</th><th class="p-1">枚數</th><th class="p-1">開倉價</th><th class="p-1">平倉價</th><th class="p-1">最高浮盈/虧</th><th class="p-1">平倉損益(JPY)</th><th class="p-1">原因</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-history" class="font-mono text-gray-300 divide-y divide-gray-800/50"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 7. 自訂遊戲風格離場確認彈窗 (Leave Confirmation Modal) -->
+    <!-- ========================================== -->
+    <div id="leave-confirm-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-gray-900 border-2 border-red-500/80 max-w-md w-full rounded-2xl p-6 shadow-2xl text-center space-y-4">
+            <div class="text-3xl">🚪</div>
+            <h3 class="text-xl font-bold text-red-400">確定要離場結算嗎？</h3>
+            <p class="text-sm text-gray-300 leading-relaxed bg-gray-950 p-3 rounded-xl border border-gray-800">
+                點擊確定後，目前所有開啟中的持倉將以<span class="text-amber-400 font-bold">市價全數平倉</span>並進行最終成績結算。
+            </p>
+            <div class="flex justify-center gap-3 pt-2">
+                <button onclick="hideLeaveModal()" class="w-1/2 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded-xl border border-gray-700 transition">
+                    取消
+                </button>
+                <button onclick="executeLeave()" class="w-1/2 py-2.5 bg-red-600 hover:bg-red-500 text-white font-extrabold rounded-xl shadow-lg transition">
+                    確定離場
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 8. 遊戲結算彈窗 (Settlement Modal) -->
+    <!-- ========================================== -->
+    <div id="settlement-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div id="settlement-card" class="bg-gray-900 border-2 border-indigo-500 max-w-2xl w-full rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="text-center">
+                <h1 id="settle-title" class="text-4xl font-black text-red-500 mb-2">爆倉了！</h1>
+                <p id="settle-subtitle" class="text-gray-400 font-mono">FX不是人類能碰的……</p>
+            </div>
+
+            <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-2 text-sm font-mono">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">帳戶持有金額:</span>
+                    <span id="settle-balance" class="text-white font-bold">￥0 JPY</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">淨盈利 / 虧損:</span>
+                    <span id="settle-net-pnl" class="font-bold text-red-500">- ￥300,000 JPY</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">當局最高持有金額:</span>
+                    <span id="settle-peak-balance" class="text-gray-200">￥300,000 JPY</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">當局最低維持率:</span>
+                    <span id="settle-lowest-margin" class="text-gray-200">--</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">當局最高槓桿倍數:</span>
+                    <span id="settle-peak-leverage" class="text-gray-200">100 x</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">當局總遊玩時間:</span>
+                    <span id="settle-play-time" class="text-gray-200">00:00</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-1 text-xs font-mono">
+                <div class="text-gray-500 mb-1 font-sans">歷史部位極值紀錄 (當局)</div>
+                <div id="settle-ext-float-win">最高未實現利潤: 無</div>
+                <div id="settle-ext-float-loss">最高未實現損失: 無</div>
+                <div id="settle-ext-real-win">最高已實現利潤: 無</div>
+                <div id="settle-ext-real-loss">最高已實現損失: 無</div>
+            </div>
+
+            <div class="flex justify-center gap-4">
+                <button onclick="restartGame()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow">
+                    🔄 重新開始
+                </button>
+                <button onclick="returnToMainMenu()" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded-xl border border-gray-700">
+                    🏠 回到主頁
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Engine -->
+    <script>
+        const CURRENCIES = ['USD', 'JPY', 'GBP', 'EUR', 'AUD', 'CHF', 'CAD'];
+        
+        const CURRENCY_VOLATILITY = {
+            GBP: 1.8, AUD: 1.5, CAD: 1.3, EUR: 1.0, USD: 0.9, CHF: 0.8, JPY: 1.1
+        };
+
+        const INITIAL_BASE_RATES = { JPY: 1.0, USD: 150.0, EUR: 162.0, GBP: 190.0, AUD: 98.0, CHF: 168.0, CAD: 110.0 };
+        let BASE_RATES_JPY = { ...INITIAL_BASE_RATES };
+
+        const NEWS_L1 = [
+            { text: "某國都市市中心發生多車連環追撞交通事故。", target: null, dir: 1, pips: 0 },
+            { text: "氣象局預報明日將有大範圍陣雨，市民請攜帶雨具。", target: null, dir: 1, pips: 0 },
+            { text: "知名連鎖速食店宣布推出期間限定抹茶聖代。", target: null, dir: 1, pips: 0 },
+            { text: "動物園熊貓順利產下雙胞胎，吸引大批民眾觀賞。", target: null, dir: 1, pips: 0 },
+            { text: "地方政府宣布啟動老舊社區綠化改建計畫。", target: null, dir: 1, pips: 0 },
+            { text: "最新流行音樂榜單公布，新人歌手奪得冠軍。", target: null, dir: 1, pips: 0 },
+            { text: "知名咖啡品牌宣布提升全台門市環保杯折扣。", target: null, dir: 1, pips: 0 },
+            { text: "天文台預測今晚將出現流星雨，最佳觀測點人潮擁擠。", target: null, dir: 1, pips: 0 },
+            { text: "熱門動漫電影上映首日票房破億，打破歷年紀錄。", target: null, dir: 1, pips: 0 },
+            { text: "便利商店推出新型點心，社群媒體引發開箱熱潮。", target: null, dir: 1, pips: 0 },
+            { text: "某地因強風導致部分路段路樹倒塌，警消派員清理中。", target: null, dir: 1, pips: 0 },
+            { text: "國際書展盛大開幕，展出上萬本各國精彩圖書。", target: null, dir: 1, pips: 0 },
+            { text: "體育館舉辦亞洲羽球聯賽，現場座無虛席。", target: null, dir: 1, pips: 0 },
+            { text: "專家提醒春季為過敏高發期，出門建議佩戴口罩。", target: null, dir: 1, pips: 0 },
+            { text: "某著名觀光夜市獲頒優良衛生示範區榮譽獎章。", target: null, dir: 1, pips: 0 },
+            { text: "科技大廠舉辦青少年程式設計大賽，吸引上千人報名。", target: null, dir: 1, pips: 0 },
+            { text: "市區新增一條單車專用道，綠化覆蓋率提升。", target: null, dir: 1, pips: 0 },
+            { text: "知名手搖飲料店發表新品，祭出買一送一優惠活動。", target: null, dir: 1, pips: 0 },
+            { text: "博物館展出千年前古代國寶文物，民眾排隊等候入場。", target: null, dir: 1, pips: 0 },
+            { text: "氣象台表示颱風路徑偏南，對本島無直接重大影響。", target: null, dir: 1, pips: 0 },
+            { text: "大學校園舉辦創業市集，學生展現多元創意產品。", target: null, dir: 1, pips: 0 },
+            { text: "水庫蓄水量回升至安全線以上，暫緩限水措施。", target: null, dir: 1, pips: 0 },
+            { text: "大型主題樂園全新新設施啟用，迎來萬名遊客體驗。", target: null, dir: 1, pips: 0 },
+            { text: "環保署推廣低碳生活，鼓勵民眾搭乘大眾運輸工具。", target: null, dir: 1, pips: 0 },
+            { text: "市中心發生短暫停電事故，台電十分鐘內緊急修復。", target: null, dir: 1, pips: 0 },
+            { text: "國際美食節吸引上百家世界特色小吃參展。", target: null, dir: 1, pips: 0 },
+            { text: "知名連鎖超市舉辦日本產地直發蔬果週。", target: null, dir: 1, pips: 0 },
+            { text: "高鐵宣布加開連續假期返鄉班次，即日起開放預購。", target: null, dir: 1, pips: 0 },
+            { text: "研究指出每日保持適度運動有助於降低心血管疾病。", target: null, dir: 1, pips: 0 },
+            { text: "地方慈善團體舉辦義賣活動，所得全數捐贈偏鄉小學。", target: null, dir: 1, pips: 0 }
+        ];
+
+        const NEWS_L2 = [
+            { text: "【金融】美聯儲公布最新利率決議，宣布維持利率不變。", target: "USD", dir: 1, pips: 20 },
+            { text: "【金融】美國最新 CPI 通膨數據高於市場預期，引發加息猜測。", target: "USD", dir: 1, pips: 25 },
+            { text: "【金融】日本央行總裁於記者會表示正在密切關注匯率過度波動。", target: "JPY", dir: 1, pips: 30 },
+            { text: "【金融】歐洲央行宣布預防性降息 1 碼以刺激區域經濟。", target: "EUR", dir: -1, pips: 22 },
+            { text: "【金融】國際原油價格受產油國策略影響大幅攀升。", target: "CAD", dir: 1, pips: 25 },
+            { text: "【金融】全球大型科技巨頭季報利潤超預期，美股期貨大漲。", target: "USD", dir: 1, pips: 20 },
+            { text: "【金融】英國央行官員暗示政策利率可能維持在高位更長時間。", target: "GBP", dir: 1, pips: 28 },
+            { text: "【金融】澳洲最新就業數據表現強勁，澳幣買盤湧現。", target: "AUD", dir: 1, pips: 24 },
+            { text: "【金融】瑞士央行公佈外匯儲備數據，暗示可能進行市場干預。", target: "CHF", dir: -1, pips: 20 },
+            { text: "【金融】日本最新採購經理人指數(PMI)低於預期，經濟復甦受阻。", target: "JPY", dir: -1, pips: 25 },
+            { text: "【金融】歐元區零售銷售數據疲軟，市場對經濟衰退風險升溫。", target: "EUR", dir: -1, pips: 20 },
+            { text: "【金融】英國最新零售物價指數(RPI)攀升，通膨壓力持續存在。", target: "GBP", dir: 1, pips: 22 },
+            { text: "【金融】加拿大央行維持基準利率不變，聲明態度偏向中性。", target: "CAD", dir: -1, pips: 18 },
+            { text: "【金融】美國非農就業人口(NFP)新增超越預期，美元短線走強。", target: "USD", dir: 1, pips: 30 },
+            { text: "【金融】全球避險資產需求上揚，資金持續流入瑞士法郎與日圓。", target: "JPY", dir: 1, pips: 25 }
+        ];
+
+        const NEWS_L3 = [
+            { text: "【黑天鵝】瑞士央行突發宣布取消法郎匯率上限，市場劇烈閃崩！", target: "CHF", dir: 1, pips: 150 },
+            { text: "【黑天鵝】地緣政治衝突全面升級，全球避險情緒瞬時爆發！", target: "JPY", dir: 1, pips: 140 },
+            { text: "【黑天鵝】國際世紀級投資銀行驚傳資不抵債，連鎖倒閉危機蔓延！", target: "USD", dir: -1, pips: 160 },
+            { text: "【黑天鵝】全球經濟泡沫破裂，華爾街觸發多次熔斷機制！", target: "USD", dir: -1, pips: 180 },
+            { text: "【黑天鵝】主要產油國突發聯合無預警大幅減產，能源危機爆發！", target: "CAD", dir: 1, pips: 130 },
+            { text: "【黑天鵝】央行無預警實施超高強度負利率政策，匯率巨幅穿透走勢圖！", target: "JPY", dir: -1, pips: 170 }
+        ];
+
+        const ASSISTANT_CONFIG = {
+            currentCharId: '01',
+            currentOutfitId: '00',
+            getFolder() {
+                let code = this.currentCharId + this.currentOutfitId;
+                return `assets/${code}/${code}`;
+            },
+            getExpressionPath(exp) {
+                return `${this.getFolder()}_${exp}.png`;
+            }
+        };
+
+        const RUMI_DIALOGUE_POOLS = {
+            liquidation: [
+                "資、資金全部歸零了……？阿瑪瑪……我下個月的學費啊啊啊！",
+                "騙人的吧……直覺明明跟我說這裡會反彈的啊！",
+                "全毀了……這就是 FX 的深淵嗎……露米要留級了啦……",
+                "不可以……至少把飯錢留給我啊……這市場太殘酷了……",
+                "嗚哇啊啊！我的直覺再也不相信這張圖表了啦！"
+            ],
+            blackSwan: [
+                "黑天鵝來了！柱子直接穿透線圖了啊啊啊！",
+                "這根 K 線是怎麼回事？！這不是人類能畫出來的線形啊！",
+                "等一下！新聞上寫的字每個我都懂，但這漲跌合理嗎？！",
+                "哇啊啊！心臟要跳出來了！到底要往哪邊衝啦？！",
+                "冷靜……感覺告訴我……算了我完全不知道會怎樣啦！"
+            ],
+            marginCall: [
+                "保證金警告了……要補錢還是凹單……直覺快救救我！",
+                "快看！全螢幕都在閃紅光耶……好美喔……（神智不清）",
+                "心跳比匯率波動還快了……救命啊，要被強制平倉了啦！",
+                "再一下下就好！我覺得奇蹟馬上就要發生了啊啊！",
+                "嗚……學費危機！有沒有神仙幫忙把 K 線推上去啊！"
+            ],
+            floatProfitHigh: [
+                "嘻嘻～感覺今天可以吃大餐了！我的第六感果然超準！",
+                "太神啦！這波賺到的錢感覺可以把這學期的課本全買齊了！",
+                "看吧！我就說跟著感覺走準沒錯，我是交易天才吧！",
+                "利潤一直在漲耶！感覺今天連幸運女神都站在我這邊！",
+                "哇～數字一直變多！感覺買新衣服的預算有著落了！"
+            ],
+            floatLossLow: [
+                "誒？變成小虧損了……沒關係，感覺等一下就會漲回來！",
+                "微幅回檔而已啦！直覺告訴我這只是在蓄力而已！",
+                "稍微紅了一下下，免驚啦！我們的大趨勢還在！",
+                "嗯……雖然跟我想的不太一樣，但現在緊張就輸了！",
+                "小問題小問題～真正的勇士是不會被這點小波折吓倒的！"
+            ],
+            floatLossHigh: [
+                "只要不賣就不算虧！這叫……呃對，價值投資啦！",
+                "冷靜……這只是暫時的回檔……直覺說絕對不能現在砍單！",
+                "我相信我的第六感！這裡一定有隱形的超強支撐線！",
+                "痛痛痛……沒事，我相信這張單一定能逆風翻盤的！",
+                "只要我不看盤，虧損就傷不到我……（閉上眼睛）"
+            ],
+            closeProfitHigh: [
+                "太神啦！落袋為安，這學期的學費直接搞定一半！",
+                "果斷平倉！我的第六感果然在最完美的時機帶我離場了！",
+                "賺翻囉～今晚必須吃和牛燒肉慶祝一下！",
+                "這就是直覺型交易員的實力！太爽快啦！",
+                "入袋為安！看著帳戶餘額變多，感覺上課都有動力了！"
+            ],
+            closeProfitLow: [
+                "積少成多！有賺就是好單，露米的學費基金又增加了～",
+                "順利落袋！雖然賺的不多，但感覺心裡特別踏實！",
+                "獲利離場！這波小賺一筆，等一下去買杯珍奶獎勵自己！",
+                "落袋為安最安心～跟著直覺小賺即撤！",
+                "完美的落幕！賺錢的感覺真好～"
+            ],
+            closeLossLow: [
+                "果斷止損！留得青山在，下次靠直覺贏回來！",
+                "保住絕大部分本金！露米今天的風險控管真棒（自誇）。",
+                "雖然虧了一小筆，但至少沒讓傷害擴大，下一單會更好！",
+                "認賠離場～感覺現在換個幣種運氣會更好喔！",
+                "小傷小傷！學費還穩穩的，調整心情再出發！"
+            ],
+            closeLossHigh: [
+                "痛痛痛……雖然砍在肉上，但總比爆倉歸零好啦！",
+                "嗚……學費縮水了……今天開始要省吃檢用過日子了……",
+                "我的第六感竟然失效了……這市場不按牌理出牌啊！",
+                "擦乾眼淚！這只是大學生投資路上的一點小挫折……",
+                "嗚嗚……雖然虧好多，但露米是不會輕言放棄的！"
+            ],
+            idleNoPosition: [
+                "（搖晃）發呆中……直覺還沒告訴我現在該買哪邊耶。",
+                "看著 K 線跳動其實蠻療癒的……都有點睏了（揉眼睛）。",
+                "一直不下單的話，學費可不會自己從天而降喔～",
+                "要不要相信一次直覺，隨便挑個貨幣對買買看呀？",
+                "喝口水休息一下吧！保持好心情才能迎來好運氣～"
+            ],
+            idleProfitPosition: [
+                "利潤還在擴大耶！要不要相信直覺，讓獲利繼續奔跑？！",
+                "看著數字一直增加真好～你要不要先落袋為安呀？",
+                "感覺這波趨勢很強！我的直覺說還可以再等等看喔！",
+                "盯著這張單好久了，感覺露米離學費自由又近了一步！",
+                "嘻嘻，這張單表現真棒，要不要考慮加碼啊？（開玩笑的）"
+            ],
+            idleLossPosition: [
+                "已經盯著這張單好久了……要不要果斷止損換下一張啊？",
+                "凹單很辛苦吧……露米陪你一起等奇蹟出現！",
+                "直覺告訴我……現在去洗個臉回來可能就轉紅為綠了！",
+                "要堅持下去還是認錯離場呢？這次聽你的！",
+                "虧損卡在那邊好討厭喔……希望下一根 K 線直接暴漲！"
+            ]
+        };
+
+        const ACADEMIC_TUTORIALS = {
+            margin: `<strong>保證金與槓桿機制 (Margin & Leverage)</strong><br><br>槓桿機制（Leverage）本質上是透過履約保證金（Margin）進行的金融衍生品交易。投資人向流動性提供者（LP）融資借貸資金以放大資本曝險規模。<br><br>雖能顯著提升資本效率（Capital Efficiency），但在未做好頭寸風控時，資產淨值波動將加速觸發強制平倉清算。`,
+            direction: `<strong>做多 (BUY) 與做空 (SELL)</strong><br><br>• <strong>做多 (Long Position)</strong>：購入基準貨幣並拋售計價貨幣，預期匯率上揚，待價高時賣出平倉獲利。<br>• <strong>做空 (Short Position)</strong>：藉由借券賣出機制於高位拋售基準貨幣，待匯率回落後買回平倉（Covering），獲取價差收益。`,
+            lots: `<strong>交易規模 (Lots & Japanese 'Mai')</strong><br><br>外匯市場標準手（Standard Lot）為 100,000 基礎貨幣單位。本系統採用日本 retail FX 特有之『枚』為頭寸單位（1 枚 = 10,000 單位 = 0.1 標準手），以利進行更精細的頭寸規模管理（Position Sizing）。`,
+            liquidation: `<strong>維持率與清算邊界 (Margin Level & Liquidation)</strong><br><br>維持率算式：<br><code>維持率 = (帳戶資產淨值 / 已用保證金) × 100%</code><br><br>當資產淨值因浮動虧損侵蝕至強平線（Liquidation Level）以下時，清算引擎將執行系統性強制平倉（Automatic Margin Call Liquidation），以防投資者產生負資產。`,
+            pips: `<strong>匯率點數精確度 (Pips Precision)</strong><br><br>Pip（Percentage in Point）為外匯市場衡量價差的最小基本單位。<br>• <strong>含日圓對 (JPY Pairs)</strong>：精確至小數點後第 2 位（1 Pip = 0.01）。<br>• <strong>非日圓對 (Non-JPY Pairs)</strong>：精確至小數點後第 4 位（1 Pip = 0.0001）。`,
+            news: `<strong>新聞與黑天鵝衝擊 (News Shock)</strong><br><br>總體經濟數據公佈（如 NFP、CPI、FED 利率決議）與地緣政治突發事件將瞬間打破供需平衡，引發高動量點數位移與流動性抽離。`,
+            rumi: `<strong>交易助手露米狀態 (Assistant Metrics)</strong><br><br>交易助手露米將根據帳戶淨值維持率、未實現損益及新聞事件，實時切換心理狀態與對話表情。`
+        };
+
+        let gameState = {
+            mode: 'challenge', subMode: 'std',
+            balance: 300000, initialBalance: 300000, targetBalance: 20000000,
+            maxLeverageAllowed: 1000, callRatio: 100, liqRatio: 50,
+            tpslAllowed: true, tpslForced: false, hedgingAllowed: true,
+            newsIntervalMin: 3, newsIntervalMax: 8,
+            newsL1: 80, newsL2: 17, newsL3: 3,
+            newsDelayOffset: 0.0,
+            
+            candleIntervalSec: 5,
+            
+            startTime: 0, gameTimer: null, timeRemaining: 0,
+            userActionTimer: 0,
+            currentRumiState: 'happy',
+            
+            peakBalance: 300000, lowestMarginRatio: null, peakLeverageUsed: 1,
+            extFloatWin: null, extFloatLoss: null, extRealWin: null, extRealLoss: null,
+            positions: [], history: [],
+            klineCaches: {}
+        };
+
+        const TPS = 20;
+
+        window.onload = function() {
+            let bar = document.getElementById('loading-bar');
+            let progress = 0;
+            let timer = setInterval(() => {
+                progress += 20;
+                bar.style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(timer);
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        document.getElementById('warning-screen').classList.remove('hidden');
+                    }, 300);
+                }
+            }, 80);
+            
+            window.addEventListener('click', resetUserActionTimer);
+            window.addEventListener('keydown', resetUserActionTimer);
+        };
+
+        function resetUserActionTimer() {
+            gameState.userActionTimer = 0;
+        }
+
+        function getRandomDialogue(poolKey) {
+            let pool = RUMI_DIALOGUE_POOLS[poolKey];
+            if (!pool || pool.length === 0) return "露米：「加油加油！」";
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        // 對話防刷保護機制變數
+        let lastRumiPoolKey = '';
+        let lastRumiTalkTime = 0;
+
+        function setRumiState(exp, poolKeyOrText, force = false) {
+            let now = Date.now();
+            
+            if (!force && poolKeyOrText === lastRumiPoolKey && (now - lastRumiTalkTime < 5000)) {
+                let avatarImg = document.getElementById('rumi-avatar');
+                let newSrc = ASSISTANT_CONFIG.getExpressionPath(exp);
+                if (avatarImg.getAttribute('src') !== newSrc) avatarImg.src = newSrc;
+                return;
+            }
+
+            gameState.currentRumiState = exp;
+            lastRumiPoolKey = poolKeyOrText;
+            lastRumiTalkTime = now;
+
+            let text = typeof poolKeyOrText === 'string' && RUMI_DIALOGUE_POOLS[poolKeyOrText] 
+                       ? getRandomDialogue(poolKeyOrText) 
+                       : poolKeyOrText;
+                       
+            document.getElementById('rumi-dialogue').innerText = `露米：「${text}」`;
+            let avatarImg = document.getElementById('rumi-avatar');
+            let newSrc = ASSISTANT_CONFIG.getExpressionPath(exp);
+            if (avatarImg.getAttribute('src') !== newSrc) {
+                avatarImg.src = newSrc;
+            }
+        }
+
+        function acceptWarning() {
+            document.getElementById('warning-screen').classList.add('hidden');
+            document.getElementById('quick-tutorial-modal').classList.remove('hidden');
+        }
+
+        function closeQuickTutorial() {
+            document.getElementById('quick-tutorial-modal').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
+            initCurrencyDropdowns();
+            switchTab('margin');
+            startNewsRenderEngine();
+        }
+
+        function toggleFullTutorial(show) {
+            document.getElementById('full-tutorial-modal').classList.toggle('hidden', !show);
+        }
+
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('bg-gray-800', 'text-indigo-400'));
+            document.getElementById('tutorial-content').innerHTML = ACADEMIC_TUTORIALS[tabKey] || '';
+        }
+
+        function selectMode(modeKey) {
+            gameState.mode = modeKey;
+            let subDiv = document.getElementById('sub-options');
+            let modeCards = document.getElementById('mode-cards');
+            
+            if (modeKey === 'endless') {
+                gameState.subMode = 'std';
+                document.getElementById('btn-start-game').classList.remove('hidden');
+                document.getElementById('btn-back').classList.add('hidden');
+                return;
+            }
+
+            modeCards.classList.add('hidden');
+            subDiv.classList.remove('hidden');
+            document.getElementById('btn-back').classList.remove('hidden');
+            document.getElementById('btn-start-game').classList.add('hidden');
+
+            if (modeKey === 'challenge') {
+                subDiv.innerHTML = `
+                    <div onclick="selectSubOption('easy')" class="sub-card bg-gray-800 border-2 border-gray-700 hover:border-green-500 rounded-2xl p-5 cursor-pointer text-xs space-y-2">
+                        <h4 class="text-sm font-bold text-green-400">🟢 FX新手 (簡單)</h4>
+                        <p class="text-gray-400">本金 $50萬 / 目標 $500萬 / 槓桿 25x / 新聞延遲 +0.5s</p>
+                    </div>
+                    <div onclick="selectSubOption('std')" class="sub-card bg-gray-800 border-2 border-gray-700 hover:border-amber-500 rounded-2xl p-5 cursor-pointer text-xs space-y-2">
+                        <h4 class="text-sm font-bold text-amber-400">🟡 散戶玩家 (標準)</h4>
+                        <p class="text-gray-400">本金 $30萬 / 目標 $2000萬 / 槓桿 1000x / 標準新聞延遲</p>
+                    </div>
+                    <div onclick="selectSubOption('hard')" class="sub-card bg-gray-800 border-2 border-gray-700 hover:border-red-500 rounded-2xl p-5 cursor-pointer text-xs space-y-2">
+                        <h4 class="text-sm font-bold text-red-400">🔴 投資專家 (困難)</h4>
+                        <p class="text-gray-400">本金 $10萬 / 目標 $5000萬 / 強平 100% / 新聞延遲 -0.5s</p>
+                    </div>
+                `;
+            } else if (modeKey === 'time') {
+                subDiv.innerHTML = `
+                    <div onclick="selectSubOption('3m')" class="sub-card bg-gray-800 border-2 border-gray-700 hover:border-amber-500 rounded-2xl p-5 cursor-pointer text-xs space-y-2">
+                        <h4 class="text-sm font-bold text-amber-400">⚡ 3 分鐘速戰</h4><p class="text-gray-400">時限 3 分鐘。</p>
+                    </div>
+                    <div onclick="selectSubOption('5m')" class="sub-card bg-gray-800 border-2 border-gray-700 hover:border-amber-500 rounded-2xl p-5 cursor-pointer text-xs space-y-2">
+                        <h4 class="text-sm font-bold text-amber-400">⏱️ 5 分鐘挑戰</h4><p class="text-gray-400">時限 5 分鐘。</p>
+                    </div>
+                    <div onclick="selectSubOption('10m')" class="sub-card bg-gray-800 border-2 border-gray-700 hover:border-amber-500 rounded-2xl p-5 cursor-pointer text-xs space-y-2">
+                        <h4 class="text-sm font-bold text-amber-400">⌛ 10 分鐘拉鋸</h4><p class="text-gray-400">時限 10 分鐘。</p>
+                    </div>
+                `;
+            }
+        }
+
+        function selectSubOption(subKey) {
+            gameState.subMode = subKey;
+            document.querySelectorAll('.sub-card').forEach(c => c.classList.remove('border-indigo-500', 'bg-gray-700'));
+            event.currentTarget.classList.add('border-indigo-500', 'bg-gray-700');
+            document.getElementById('btn-start-game').classList.remove('hidden');
+        }
+
+        function resetToModeSelect() {
+            document.getElementById('mode-cards').classList.remove('hidden');
+            document.getElementById('sub-options').classList.add('hidden');
+            document.getElementById('btn-back').classList.add('hidden');
+            document.getElementById('btn-start-game').classList.add('hidden');
+        }
+
+        function startGame() {
+            BASE_RATES_JPY = { ...INITIAL_BASE_RATES };
+
+            if (gameState.mode === 'challenge') {
+                if (gameState.subMode === 'easy') {
+                    gameState.balance = 500000; gameState.targetBalance = 5000000;
+                    gameState.maxLeverageAllowed = 25; gameState.callRatio = 80; gameState.liqRatio = 20;
+                    gameState.tpslAllowed = true; gameState.tpslForced = true; gameState.hedgingAllowed = true;
+                    gameState.newsIntervalMin = 5; gameState.newsIntervalMax = 10;
+                    gameState.newsL1 = 90; gameState.newsL2 = 8; gameState.newsL3 = 2;
+                    gameState.newsDelayOffset = 0.5;
+                } else if (gameState.subMode === 'std') {
+                    gameState.balance = 300000; gameState.targetBalance = 20000000;
+                    gameState.maxLeverageAllowed = 1000; gameState.callRatio = 100; gameState.liqRatio = 50;
+                    gameState.tpslAllowed = true; gameState.tpslForced = false; gameState.hedgingAllowed = true;
+                    gameState.newsIntervalMin = 3; gameState.newsIntervalMax = 8;
+                    gameState.newsL1 = 80; gameState.newsL2 = 17; gameState.newsL3 = 3;
+                    gameState.newsDelayOffset = 0.0;
+                } else if (gameState.subMode === 'hard') {
+                    gameState.balance = 100000; gameState.targetBalance = 50000000;
+                    gameState.maxLeverageAllowed = 1000; gameState.callRatio = 150; gameState.liqRatio = 100;
+                    gameState.tpslAllowed = false; gameState.tpslForced = false; gameState.hedgingAllowed = false;
+                    gameState.newsIntervalMin = 2; gameState.newsIntervalMax = 5;
+                    gameState.newsL1 = 70; gameState.newsL2 = 25; gameState.newsL3 = 5;
+                    gameState.newsDelayOffset = -0.5;
+                }
+            } else {
+                gameState.balance = 300000;
+                gameState.maxLeverageAllowed = 1000; gameState.callRatio = 100; gameState.liqRatio = 50;
+                gameState.tpslAllowed = true; gameState.tpslForced = false; gameState.hedgingAllowed = true;
+                gameState.newsIntervalMin = 3; gameState.newsIntervalMax = 8;
+                gameState.newsL1 = 80; gameState.newsL2 = 17; gameState.newsL3 = 3;
+                gameState.newsDelayOffset = 0.0;
+
+                if (gameState.mode === 'time') {
+                    let mins = gameState.subMode === '3m' ? 3 : (gameState.subMode === '5m' ? 5 : 10);
+                    gameState.timeRemaining = mins * 60;
+                }
+            }
+
+            gameState.initialBalance = gameState.balance;
+            gameState.peakBalance = gameState.balance;
+            gameState.lowestMarginRatio = null;
+            gameState.peakLeverageUsed = 1;
+            gameState.extFloatWin = null; gameState.extFloatLoss = null;
+            gameState.extRealWin = null; gameState.extRealLoss = null;
+            gameState.positions = []; gameState.history = [];
+            gameState.klineCaches = {};
+            gameState.startTime = Date.now();
+            gameState.userActionTimer = 0;
+
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            document.getElementById('btn-endless-leave').classList.toggle('hidden', gameState.mode !== 'endless');
+            document.getElementById('timer-display').classList.toggle('hidden', gameState.mode !== 'time');
+            
+            let targetDisp = document.getElementById('target-display');
+            if (gameState.mode === 'challenge') {
+                targetDisp.innerText = `🎯 目標: ￥${gameState.targetBalance.toLocaleString()}`;
+                targetDisp.classList.remove('hidden');
+            } else {
+                targetDisp.classList.add('hidden');
+            }
+
+            document.getElementById('input-leverage').max = gameState.maxLeverageAllowed;
+            document.getElementById('input-leverage').value = Math.min(100, gameState.maxLeverageAllowed);
+            document.getElementById('tpsl-container').style.display = gameState.tpslAllowed ? 'grid' : 'none';
+
+            initAllCurrencyCaches();
+            switchCurrencyPair();
+            calcMarginEstimate();
+            setRumiState('happy', 'idleNoPosition', true);
+            startLoop();
+        }
+
+        function initCurrencyDropdowns() {
+            let bSel = document.getElementById('sel-base');
+            let qSel = document.getElementById('sel-quote');
+            bSel.innerHTML = ''; qSel.innerHTML = '';
+
+            CURRENCIES.forEach(c => {
+                bSel.innerHTML += `<option value="${c}">${c}</option>`;
+                qSel.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            bSel.value = 'USD';
+            qSel.value = 'JPY';
+            onCurrencySelectChange();
+        }
+
+        function onCurrencySelectChange() {
+            let bSel = document.getElementById('sel-base');
+            let qSel = document.getElementById('sel-quote');
+            let bVal = bSel.value;
+            let qVal = qSel.value;
+
+            Array.from(qSel.options).forEach(opt => {
+                opt.disabled = (opt.value === bVal);
+            });
+            if (qVal === bVal) {
+                let firstValid = CURRENCIES.find(c => c !== bVal);
+                qSel.value = firstValid;
+            }
+
+            switchCurrencyPair();
+            calcMarginEstimate();
+        }
+
+        function calcMarginEstimate() {
+            let bVal = document.getElementById('sel-base').value;
+            let qVal = document.getElementById('sel-quote').value;
+            let lev = parseFloat(document.getElementById('input-leverage').value) || 1;
+            let lots = parseFloat(document.getElementById('input-lots').value) || 0.1;
+
+            let baseInJpy = getPairRate(bVal, 'JPY');
+            let requiredMargin = (lots * 10000 * baseInJpy) / lev;
+
+            let estSpan = document.getElementById('est-margin');
+            estSpan.innerText = '￥' + Math.floor(requiredMargin).toLocaleString();
+            
+            if (requiredMargin > gameState.balance) {
+                estSpan.classList.add('text-red-500'); estSpan.classList.remove('text-amber-400');
+            } else {
+                estSpan.classList.remove('text-red-500'); estSpan.classList.add('text-amber-400');
+            }
+        }
+
+        function getPairRate(base, quote) {
+            if (base === quote) return 1.0;
+            let rateBase = BASE_RATES_JPY[base] || 1;
+            let rateQuote = BASE_RATES_JPY[quote] || 1;
+            return Math.max(0.0001, rateBase / rateQuote);
+        }
+
+        // ==========================================
+        // 獨立貨幣動量 + 隨機跳動 (3~10 Ticks) 物理引擎
+        // ==========================================
+        let tickCounter = 0;
+        let randomJumpCounter = 0;
+        let nextRandomJumpInterval = getNextRandomTickInterval();
+
+        let currencyMomentums = {};
+        CURRENCIES.forEach(c => { currencyMomentums[c] = 0; });
+
+        function getNextRandomTickInterval() {
+            return Math.floor(Math.random() * 8) + 3;
+        }
+
+        function initAllCurrencyCaches() {
+            CURRENCIES.forEach(b => {
+                CURRENCIES.forEach(q => {
+                    if (b !== q) {
+                        let pairKey = `${b}/${q}`;
+                        gameState.klineCaches[pairKey] = {
+                            tickHistory: [],
+                            history: [],
+                            current: null
+                        };
+                    }
+                });
+            });
+
+            tickCounter = 0;
+            randomJumpCounter = 0;
+            nextRandomJumpInterval = getNextRandomTickInterval();
+            
+            CURRENCIES.forEach(c => { currencyMomentums[c] = 0; });
+
+            let totalTicksToSimulate = 40 * 20 * TPS;
+            for (let i = 0; i < totalTicksToSimulate; i++) {
+                updateTickInternal();
+            }
+            resampleAllCandles();
+        }
+
+        function setCandleInterval(sec) {
+            gameState.candleIntervalSec = sec;
+            document.querySelectorAll('#btn-period-5, #btn-period-10, #btn-period-20').forEach(b => {
+                b.className = 'px-2 py-0.5 bg-gray-700 text-gray-300 hover:text-white rounded font-bold';
+            });
+            document.getElementById(`btn-period-${sec}`).className = 'px-2 py-0.5 bg-indigo-600 text-white rounded font-bold';
+
+            resampleAllCandles();
+            renderCanvasChart();
+        }
+
+        // 核心修復：重組 K 線時確保開收盤價格絕對無縫銜接
+        function resampleAllCandles() {
+            let ticksPerCandle = gameState.candleIntervalSec * TPS;
+
+            Object.keys(gameState.klineCaches).forEach(pairKey => {
+                let cache = gameState.klineCaches[pairKey];
+                let ticks = cache.tickHistory || [];
+                let newHistory = [];
+
+                let startIdx = Math.max(0, ticks.length - (40 * ticksPerCandle));
+                let lastClose = null;
+
+                for (let i = startIdx; i < ticks.length - (ticks.length % ticksPerCandle || ticksPerCandle); i += ticksPerCandle) {
+                    let chunk = ticks.slice(i, i + ticksPerCandle);
+                    if (chunk.length > 0) {
+                        // 強制第一根使用第一個 tick，後續根繼承上一根 close
+                        let open = (lastClose !== null) ? lastClose : chunk[0];
+                        let close = chunk[chunk.length - 1];
+                        let high = Math.max(open, close, ...chunk);
+                        let low = Math.min(open, close, ...chunk);
+                        
+                        newHistory.push({ open, high, low, close });
+                        lastClose = close;
+                    }
+                }
+
+                cache.history = newHistory;
+
+                let currentChunk = ticks.slice(ticks.length - (ticks.length % ticksPerCandle));
+                let currentOpen = (lastClose !== null) ? lastClose : (currentChunk[0] || 1);
+                
+                if (currentChunk.length > 0) {
+                    let close = currentChunk[currentChunk.length - 1];
+                    let high = Math.max(currentOpen, close, ...currentChunk);
+                    let low = Math.min(currentOpen, close, ...currentChunk);
+                    cache.current = { open: currentOpen, high, low, close };
+                } else {
+                    cache.current = { open: currentOpen, high: currentOpen, low: currentOpen, close: currentOpen };
+                }
+            });
+
+            tickCounter = 0;
+        }
+
+        function switchCurrencyPair() {
+            tickCounter = 0;
+            randomJumpCounter = 0;
+            let base = document.getElementById('sel-base').value;
+            let quote = document.getElementById('sel-quote').value;
+            let pairKey = `${base}/${quote}`;
+
+            if (!gameState.klineCaches[pairKey]) {
+                initAllCurrencyCaches();
+            }
+
+            renderCanvasChart();
+        }
+
+        function updateTickInternal() {
+            tickCounter++;
+            randomJumpCounter++;
+
+            let ticksPerCandle = gameState.candleIntervalSec * TPS;
+            let isCandleCloseTime = (tickCounter >= ticksPerCandle);
+            let isRandomJumpTime = (randomJumpCounter >= nextRandomJumpInterval);
+
+            if (isRandomJumpTime || isCandleCloseTime) {
+                
+                CURRENCIES.forEach(base => {
+                    if (base === 'JPY') return;
+                    
+                    if (!currencyMomentums[base] || Math.random() < 0.25) {
+                        currencyMomentums[base] = (Math.random() - 0.5) * 0.00025;
+                    }
+
+                    let vol = CURRENCY_VOLATILITY[base] || 1.0;
+                    let initRate = INITIAL_BASE_RATES[base];
+                    let currentRate = BASE_RATES_JPY[base];
+                    
+                    let pullPct = (initRate - currentRate) / initRate * (0.001 / TPS); 
+                    let jumpTicks = randomJumpCounter;
+                    
+                    let noisePct = (Math.random() - 0.5) * (0.0006 / Math.sqrt(TPS)) * vol * Math.sqrt(jumpTicks);
+                    let totalPctChange = noisePct + (currencyMomentums[base] * jumpTicks) + pullPct;
+
+                    BASE_RATES_JPY[base] = Math.max(10.0, currentRate * (1 + totalPctChange));
+                });
+
+                BASE_RATES_JPY['JPY'] = 1.0;
+
+                randomJumpCounter = 0;
+                nextRandomJumpInterval = getNextRandomTickInterval();
+            }
+
+            Object.keys(gameState.klineCaches).forEach(pairKey => {
+                let [b, q] = pairKey.split('/');
+                let price = getPairRate(b, q);
+                let cache = gameState.klineCaches[pairKey];
+
+                cache.tickHistory.push(price);
+                if (cache.tickHistory.length > 40 * 20 * TPS) {
+                    cache.tickHistory.shift();
+                }
+
+                if (!cache.current) {
+                    cache.current = { open: price, high: price, low: price, close: price };
+                } else {
+                    cache.current.high = Math.max(cache.current.high, price);
+                    cache.current.low = Math.min(cache.current.low, price);
+                    cache.current.close = price;
+                }
+            });
+
+            if (isCandleCloseTime) {
+                Object.keys(gameState.klineCaches).forEach(pairKey => {
+                    let cache = gameState.klineCaches[pairKey];
+                    cache.history.push({ ...cache.current });
+                    if (cache.history.length > 40) cache.history.shift();
+                    
+                    // 核心修復：新 K 線的 open 必須等於上一根 K 線的 close
+                    let nextOpen = cache.current.close;
+                    cache.current = { open: nextOpen, high: nextOpen, low: nextOpen, close: nextOpen };
+                });
+                tickCounter = 0;
+            }
+        }
+
+        function updateTick() {
+            updateTickInternal();
+
+            let currentBase = document.getElementById('sel-base').value;
+            let currentQuote = document.getElementById('sel-quote').value;
+            let activePairKey = `${currentBase}/${currentQuote}`;
+            let currentPrice = getPairRate(currentBase, currentQuote);
+            let isJpy = (currentQuote === 'JPY');
+
+            document.getElementById('chart-pair-name').innerText = activePairKey;
+            document.getElementById('chart-current-price').innerText = currentPrice.toFixed(isJpy ? 2 : 4);
+
+            renderCanvasChart();
+        }
+
+        function getNiceStep(range, maxTicks = 5) {
+            let roughStep = range / maxTicks;
+            if (roughStep === 0) return 0.01;
+            let exponent = Math.floor(Math.log10(roughStep));
+            let fraction = roughStep / Math.pow(10, exponent);
+            let niceFraction;
+            if (fraction < 1.5) niceFraction = 1;
+            else if (fraction < 3) niceFraction = 2;
+            else if (fraction < 7) niceFraction = 5;
+            else niceFraction = 10;
+            return niceFraction * Math.pow(10, exponent);
+        }
+
+        function renderCanvasChart() {
+            let canvas = document.getElementById('klineCanvas');
+            if (!canvas) return;
+            let ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            let w = canvas.width;
+            let h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            let base = document.getElementById('sel-base').value;
+            let quote = document.getElementById('sel-quote').value;
+            let pairKey = `${base}/${quote}`;
+            let cache = gameState.klineCaches[pairKey];
+            if (!cache) return;
+
+            let candles = cache.current ? [...cache.history, cache.current] : [...cache.history];
+            if (candles.length === 0) return;
+
+            let minP = Math.min(...candles.map(c => c.low));
+            let maxP = Math.max(...candles.map(c => c.high));
+            let range = maxP - minP || 0.1;
+
+            let step = getNiceStep(range, 4);
+            let niceMin = Math.floor(minP / step) * step;
+            let niceMax = Math.ceil(maxP / step) * step;
+
+            ctx.strokeStyle = '#1f2937';
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '10px monospace';
+
+            let isJpy = (quote === 'JPY');
+            for (let p = niceMin; p <= niceMax; p += step) {
+                let y = h - ((p - niceMin) / (niceMax - niceMin)) * h;
+                if (y >= 0 && y <= h) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w - 60, y); ctx.stroke();
+                    ctx.fillText(p.toFixed(isJpy ? 2 : 4), w - 55, y + 3);
+                }
+            }
+
+            let barW = (w - 70) / 40;
+            candles.forEach((c, i) => {
+                let x = i * barW + 10;
+                let yOpen = h - ((c.open - niceMin) / (niceMax - niceMin)) * h;
+                let yClose = h - ((c.close - niceMin) / (niceMax - niceMin)) * h;
+                let yHigh = h - ((c.high - niceMin) / (niceMax - niceMin)) * h;
+                let yLow = h - ((c.low - niceMin) / (niceMax - niceMin)) * h;
+
+                let isBull = c.close >= c.open;
+                ctx.strokeStyle = isBull ? '#ef4444' : '#22c55e';
+                ctx.fillStyle = isBull ? '#ef4444' : '#22c55e';
+
+                ctx.beginPath(); ctx.moveTo(x + barW / 2, yHigh); ctx.lineTo(x + barW / 2, yLow); ctx.stroke();
+                ctx.fillRect(x + 1, Math.min(yOpen, yClose), Math.max(1, barW - 2), Math.max(2, Math.abs(yClose - yOpen)));
+            });
+        }
+
+        // ==========================================
+        // 交易與平倉事件處理
+        // ==========================================
+        function executeOrder(direction) {
+            resetUserActionTimer();
+            let base = document.getElementById('sel-base').value;
+            let quote = document.getElementById('sel-quote').value;
+            let pair = base + '/' + quote;
+            let lev = parseFloat(document.getElementById('input-leverage').value) || 1;
+            let lots = parseFloat(document.getElementById('input-lots').value) || 0.1;
+            let tpPips = parseFloat(document.getElementById('input-tp').value) || null;
+            let slPips = parseFloat(document.getElementById('input-sl').value) || null;
+
+            if (lev > gameState.maxLeverageAllowed) { alert('超過該難度最高槓桿限制！'); return; }
+
+            if (!gameState.hedgingAllowed) {
+                let existingOpposite = gameState.positions.find(p => p.pair === pair && p.direction !== direction);
+                if (existingOpposite) { alert('該難度禁止同一貨幣對進行對沖！'); return; }
+            }
+
+            let openPrice = getPairRate(base, quote);
+            let baseInJpy = getPairRate(base, 'JPY');
+            let reqMargin = (lots * 10000 * baseInJpy) / lev;
+
+            if (reqMargin > gameState.balance) { alert('可用保證金不足！'); return; }
+
+            let timeStr = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+            let pos = {
+                id: Date.now(),
+                timeStr, pair, base, quote, direction, lots, leverage: lev, openPrice, reqMargin,
+                tpPips, slPips, peakFloatWin: 0, peakFloatLoss: 0
+            };
+
+            gameState.positions.push(pos);
+            gameState.peakLeverageUsed = Math.max(gameState.peakLeverageUsed, lev);
+            renderPositionsTable();
+        }
+
+        function closePosition(id, reason = '手動平倉') {
+            resetUserActionTimer();
+            let idx = gameState.positions.findIndex(p => p.id === id);
+            if (idx === -1) return;
+            let pos = gameState.positions[idx];
+            let currentPrice = getPairRate(pos.base, pos.quote);
+
+            let isJpy = (pos.quote === 'JPY');
+            let pipDiff = (pos.direction === 'BUY') ? (currentPrice - pos.openPrice) : (pos.openPrice - currentPrice);
+            let pips = pipDiff * (isJpy ? 100 : 10000);
+
+            let quoteInJpy = getPairRate(pos.quote, 'JPY');
+            let rawPnl = pips * pos.lots * (isJpy ? 100 : 1) * quoteInJpy;
+            let pnlJpy = Math.floor(rawPnl / 10) * 10;
+
+            gameState.balance += pnlJpy;
+            let timeStr = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+
+            let histItem = {
+                timeStr, pair: pos.pair, direction: pos.direction, lots: pos.lots,
+                openPrice: pos.openPrice, closePrice: currentPrice,
+                peakFloat: pos.peakFloatWin, pnlJpy, reason
+            };
+            gameState.history.unshift(histItem);
+
+            if (pnlJpy > 100000) {
+                setRumiState('happy', 'closeProfitHigh', true);
+            } else if (pnlJpy > 0) {
+                setRumiState('happy', 'closeProfitLow', true);
+            } else if (pnlJpy >= -50000) {
+                setRumiState('neutral', 'closeLossLow', true);
+            } else {
+                setRumiState('pain', 'closeLossHigh', true);
+            }
+
+            if (pnlJpy > 0) {
+                if (!gameState.extRealWin || pnlJpy > gameState.extRealWin.val) gameState.extRealWin = { pair: pos.pair, val: pnlJpy };
+            } else if (pnlJpy < 0) {
+                if (!gameState.extRealLoss || pnlJpy < gameState.extRealLoss.val) gameState.extRealLoss = { pair: pos.pair, val: pnlJpy };
+            }
+
+            gameState.positions.splice(idx, 1);
+            renderPositionsTable();
+            renderHistoryTable();
+        }
+
+        function closeAllPositions(reason = '一鍵全平') {
+            [...gameState.positions].forEach(p => closePosition(p.id, reason));
+        }
+
+        // ==========================================
+        // 遊戲主循環與清算引擎 (50ms 週期 = 20 TPS)
+        // ==========================================
+        let newsTimerTicks = 0;
+        let newsNextIntervalTicks = 5 * TPS;
+        let secondTimerCount = 0;
+
+        function startLoop() {
+            if (gameState.gameTimer) clearInterval(gameState.gameTimer);
+            gameState.gameTimer = setInterval(() => {
+                updateTick();
+                updateCalculations();
+                checkNewsTrigger();
+
+                secondTimerCount++;
+                if (secondTimerCount >= TPS) {
+                    secondTimerCount = 0;
+                    checkTimeAttack();
+                    checkIdleTimer();
+                }
+            }, 1000 / TPS);
+        }
+
+        function updateCalculations() {
+            let totalUsedMargin = 0;
+            let totalUnrealizedJpy = 0;
+
+            gameState.positions.forEach(pos => {
+                let currentPrice = getPairRate(pos.base, pos.quote);
+                let isJpy = (pos.quote === 'JPY');
+                let pipDiff = (pos.direction === 'BUY') ? (currentPrice - pos.openPrice) : (pos.openPrice - currentPrice);
+                let pips = pipDiff * (isJpy ? 100 : 10000);
+
+                let quoteInJpy = getPairRate(pos.quote, 'JPY');
+                let rawPnl = pips * pos.lots * (isJpy ? 100 : 1) * quoteInJpy;
+                let pnlJpy = Math.floor(rawPnl / 10) * 10;
+
+                totalUsedMargin += pos.reqMargin;
+                totalUnrealizedJpy += pnlJpy;
+
+                pos.peakFloatWin = Math.max(pos.peakFloatWin, pnlJpy);
+                pos.peakFloatLoss = Math.min(pos.peakFloatLoss, pnlJpy);
+
+                if (pnlJpy > 0) {
+                    if (!gameState.extFloatWin || pnlJpy > gameState.extFloatWin.val) gameState.extFloatWin = { pair: pos.pair, val: pnlJpy };
+                } else if (pnlJpy < 0) {
+                    if (!gameState.extFloatLoss || pnlJpy < gameState.extFloatLoss.val) gameState.extFloatLoss = { pair: pos.pair, val: pnlJpy };
+                }
+
+                if (pos.tpPips && pips >= pos.tpPips) closePosition(pos.id, '止盈觸發 (TP)');
+                if (pos.slPips && pips <= -pos.slPips) closePosition(pos.id, '止損觸發 (SL)');
+            });
+
+            let equity = gameState.balance + totalUnrealizedJpy;
+            let availMargin = equity - totalUsedMargin;
+            let marginRatio = totalUsedMargin > 0 ? (equity / totalUsedMargin) * 100 : 100;
+
+            gameState.peakBalance = Math.max(gameState.peakBalance, equity);
+
+            if (totalUsedMargin > 0) {
+                if (gameState.lowestMarginRatio === null || marginRatio < gameState.lowestMarginRatio) {
+                    gameState.lowestMarginRatio = marginRatio;
+                }
+            }
+
+            document.getElementById('val-balance').innerText = '￥' + Math.floor(equity).toLocaleString();
+            document.getElementById('val-avail-margin').innerText = '￥' + Math.floor(availMargin).toLocaleString();
+            document.getElementById('val-used-margin').innerText = '￥' + Math.floor(totalUsedMargin).toLocaleString();
+
+            let unSpan = document.getElementById('val-unrealized');
+            unSpan.innerText = (totalUnrealizedJpy >= 0 ? '+' : '') + '￥' + totalUnrealizedJpy.toLocaleString();
+            unSpan.className = totalUnrealizedJpy >= 0 ? 'font-bold text-red-400' : 'font-bold text-green-400';
+
+            let ratioSpan = document.getElementById('val-margin-ratio');
+            ratioSpan.innerText = marginRatio.toFixed(1) + '%';
+
+            let screen = document.getElementById('game-screen');
+            if (marginRatio < gameState.callRatio) {
+                screen.classList.add('pulse-red');
+                setRumiState('despair', 'marginCall');
+            } else if (totalUnrealizedJpy < -50000) {
+                screen.classList.remove('pulse-red');
+                setRumiState('pain', 'floatLossHigh');
+            } else if (totalUnrealizedJpy < 0) {
+                screen.classList.remove('pulse-red');
+                setRumiState('neutral', 'floatLossLow');
+            } else if (totalUnrealizedJpy > 100000) {
+                screen.classList.remove('pulse-red');
+                setRumiState('happy', 'floatProfitHigh');
+            } else {
+                screen.classList.remove('pulse-red');
+            }
+
+            if (marginRatio < gameState.liqRatio || equity <= 0) triggerLiquidation();
+            if (gameState.mode === 'challenge' && equity >= gameState.targetBalance) triggerSettlement('clear');
+
+            renderPositionsTable();
+        }
+
+        function checkIdleTimer() {
+            gameState.userActionTimer++;
+            if (gameState.userActionTimer >= 15) {
+                gameState.userActionTimer = 0;
+                let totalUnrealized = gameState.positions.reduce((sum, pos) => {
+                    let currentPrice = getPairRate(pos.base, pos.quote);
+                    let isJpy = (pos.quote === 'JPY');
+                    let pipDiff = (pos.direction === 'BUY') ? (currentPrice - pos.openPrice) : (pos.openPrice - currentPrice);
+                    return sum + (pipDiff * (isJpy ? 100 : 10000) * pos.lots * 100);
+                }, 0);
+
+                if (gameState.positions.length === 0) {
+                    setRumiState('happy', 'idleNoPosition');
+                } else if (totalUnrealized >= 0) {
+                    setRumiState('happy', 'idleProfitPosition');
+                } else {
+                    setRumiState('pain', 'idleLossPosition');
+                }
+            }
+        }
+
+        // ==========================================
+        // 新聞衝擊引擎
+        // ==========================================
+        let activeNewsItems = [];
+
+        function startNewsRenderEngine() {
+            function tick() {
+                for (let i = activeNewsItems.length - 1; i >= 0; i--) {
+                    let item = activeNewsItems[i];
+                    item.x -= item.speed;
+                    item.el.style.transform = `translateX(${item.x}px)`;
+
+                    if (item.x < -item.el.offsetWidth) {
+                        item.el.remove();
+                        activeNewsItems.splice(i, 1);
+                    }
+                }
+                requestAnimationFrame(tick);
+            }
+            tick();
+        }
+
+        function spawnNewsItem(text, isL3 = false) {
+            let container = document.getElementById('news-container');
+            if (!container) return;
+            let containerWidth = container.clientWidth;
+
+            let el = document.createElement('span');
+            el.className = `news-item ${isL3 ? 'text-red-400' : 'text-amber-300'}`;
+            el.innerText = text;
+            container.appendChild(el);
+
+            activeNewsItems.push({
+                el: el,
+                x: containerWidth,
+                speed: 1.2
+            });
+        }
+
+        function checkNewsTrigger() {
+            newsTimerTicks++;
+            if (newsTimerTicks >= newsNextIntervalTicks) {
+                newsTimerTicks = 0;
+                let nextSecs = Math.floor(Math.random() * (gameState.newsIntervalMax - gameState.newsIntervalMin + 1)) + gameState.newsIntervalMin;
+                newsNextIntervalTicks = nextSecs * TPS;
+
+                let rand = Math.random() * 100;
+                let newsObj = null;
+                let isL3 = false;
+
+                if (rand < gameState.newsL1) {
+                    newsObj = NEWS_L1[Math.floor(Math.random() * NEWS_L1.length)];
+                } else if (rand < gameState.newsL1 + gameState.newsL2) {
+                    newsObj = NEWS_L2[Math.floor(Math.random() * NEWS_L2.length)];
+                } else {
+                    newsObj = NEWS_L3[Math.floor(Math.random() * NEWS_L3.length)];
+                    isL3 = true;
+                    setRumiState('pain', 'blackSwan', true);
+                }
+
+                spawnNewsItem(newsObj.text, isL3);
+
+                if (newsObj.pips > 0) {
+                    let baseDelay = isL3 ? 3.0 : 2.0;
+                    let finalDelay = Math.max(0.5, baseDelay + gameState.newsDelayOffset) * 1000;
+                    
+                    setTimeout(() => {
+                        applyMarketShock(newsObj.target, newsObj.dir, newsObj.pips);
+                    }, finalDelay);
+                }
+            }
+        }
+
+        function applyMarketShock(target, dir, pips) {
+            let targetCurrency = target || document.getElementById('sel-base').value;
+            let totalPctChange = Math.min(0.03, pips * 0.0001) * dir; 
+            
+            let steps = 40; 
+            let stepPct = totalPctChange / steps;
+            let count = 0;
+
+            let interval = setInterval(() => {
+                if (targetCurrency === 'JPY') {
+                    CURRENCIES.forEach(c => {
+                        if (c !== 'JPY') {
+                            BASE_RATES_JPY[c] = Math.max(10.0, BASE_RATES_JPY[c] * (1 - stepPct));
+                        }
+                    });
+                } else if (BASE_RATES_JPY[targetCurrency]) {
+                    BASE_RATES_JPY[targetCurrency] = Math.max(10.0, BASE_RATES_JPY[targetCurrency] * (1 + stepPct));
+                }
+                
+                BASE_RATES_JPY['JPY'] = 1.0;
+
+                count++;
+                if (count >= steps) clearInterval(interval);
+            }, 50);
+        }
+
+        function checkTimeAttack() {
+            if (gameState.mode === 'time') {
+                gameState.timeRemaining -= 1;
+                let mins = Math.floor(gameState.timeRemaining / 60);
+                let secs = Math.floor(gameState.timeRemaining % 60);
+                document.getElementById('timer-display').innerText = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+                if (gameState.timeRemaining <= 0) triggerSettlement('timeup');
+            }
+        }
+
+        // ==========================================
+        // UI 表格與離場對話框邏輯
+        // ==========================================
+        function showLeaveModal() {
+            document.getElementById('leave-confirm-modal').classList.remove('hidden');
+        }
+
+        function hideLeaveModal() {
+            document.getElementById('leave-confirm-modal').classList.add('hidden');
+        }
+
+        function executeLeave() {
+            hideLeaveModal();
+            closeAllPositions('離場結算');
+            triggerSettlement('leave');
+        }
+
+        function renderPositionsTable() {
+            let tbody = document.getElementById('tbody-positions');
+            tbody.innerHTML = '';
+            gameState.positions.forEach(p => {
+                let currentPrice = getPairRate(p.base, p.quote);
+                let isJpy = (p.quote === 'JPY');
+                let pipDiff = (p.direction === 'BUY') ? (currentPrice - p.openPrice) : (p.openPrice - currentPrice);
+                let pips = pipDiff * (isJpy ? 100 : 10000);
+                let quoteInJpy = getPairRate(p.quote, 'JPY');
+                let rawPnl = pips * p.lots * (isJpy ? 100 : 1) * quoteInJpy;
+                let pnlJpy = Math.floor(rawPnl / 10) * 10;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/40">
+                        <td class="p-1 text-gray-400">${p.timeStr}</td>
+                        <td class="p-1 font-bold text-indigo-300">${p.pair}</td>
+                        <td class="p-1 font-bold ${p.direction === 'BUY' ? 'text-red-400' : 'text-green-400'}">${p.direction}</td>
+                        <td class="p-1">${p.lots} 枚</td>
+                        <td class="p-1">${p.openPrice.toFixed(isJpy ? 2 : 4)}</td>
+                        <td class="p-1">${currentPrice.toFixed(isJpy ? 2 : 4)}</td>
+                        <td class="p-1 font-bold ${pnlJpy >= 0 ? 'text-red-400' : 'text-green-400'}">${pnlJpy >= 0 ? '+' : ''}${pnlJpy}</td>
+                        <td class="p-1"><button onclick="closePosition(${p.id})" class="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 rounded text-[10px]">平倉</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderHistoryTable() {
+            let tbody = document.getElementById('tbody-history');
+            tbody.innerHTML = '';
+            gameState.history.forEach(h => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/40">
+                        <td class="p-1 text-gray-400">${h.timeStr}</td>
+                        <td class="p-1 text-indigo-300">${h.pair}</td>
+                        <td class="p-1 ${h.direction === 'BUY' ? 'text-red-400' : 'text-green-400'}">${h.direction}</td>
+                        <td class="p-1">${h.lots} 枚</td>
+                        <td class="p-1">${h.openPrice.toFixed(2)}</td>
+                        <td class="p-1">${h.closePrice.toFixed(2)}</td>
+                        <td class="p-1 text-gray-400">${h.peakFloat}</td>
+                        <td class="p-1 font-bold ${h.pnlJpy >= 0 ? 'text-red-400' : 'text-green-400'}">${h.pnlJpy >= 0 ? '+' : ''}${h.pnlJpy}</td>
+                        <td class="p-1 text-gray-400">${h.reason}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function switchBottomTab(tab) {
+            document.getElementById('table-positions').classList.toggle('hidden', tab !== 'positions');
+            document.getElementById('table-history').classList.toggle('hidden', tab !== 'history');
+            document.getElementById('tab-btn-pos').className = tab === 'positions' ? 'px-3 py-1 bg-gray-800 text-indigo-400 rounded font-bold' : 'px-3 py-1 bg-gray-950 text-gray-400 rounded font-bold';
+            document.getElementById('tab-btn-hist').className = tab === 'history' ? 'px-3 py-1 bg-gray-800 text-indigo-400 rounded font-bold' : 'px-3 py-1 bg-gray-950 text-gray-400 rounded font-bold';
+        }
+
+        function triggerLiquidation() {
+            closeAllPositions('強制平倉');
+            triggerSettlement('liquidation');
+        }
+
+        function triggerSettlement(reason) {
+            clearInterval(gameState.gameTimer);
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('settlement-modal').classList.remove('hidden');
+
+            let titleEl = document.getElementById('settle-title');
+            let subEl = document.getElementById('settle-subtitle');
+            let netPnl = gameState.balance - gameState.initialBalance;
+
+            if (reason === 'liquidation') {
+                titleEl.innerText = '爆倉了！';
+                titleEl.className = 'text-4xl font-black text-red-500 mb-2';
+                subEl.innerText = 'FX不是人類能碰的……';
+                setRumiState('despair', 'liquidation', true);
+            } else if (reason === 'clear') {
+                titleEl.innerText = '達成目標！';
+                titleEl.className = 'text-4xl font-black text-amber-400 mb-2';
+                subEl.innerText = '嘻嘻！賺爛了～學費基金爆滿！';
+            } else if (reason === 'timeup' || reason === 'leave') {
+                titleEl.innerText = netPnl >= 0 ? '獲利撤退！' : '及時止損！';
+                titleEl.className = netPnl >= 0 ? 'text-4xl font-black text-green-400 mb-2' : 'text-4xl font-black text-amber-500 mb-2';
+                subEl.innerText = netPnl > 0 ? '這波賺翻啦～' : (netPnl === 0 ? '沒賺也沒虧，保住本金了！' : '嗚哇，虧了……');
+            }
+
+            document.getElementById('settle-balance').innerText = '￥' + Math.floor(gameState.balance).toLocaleString() + ' JPY';
+            
+            let netSpan = document.getElementById('settle-net-pnl');
+            netSpan.innerText = (netPnl >= 0 ? '+ ￥' : '- ￥') + Math.abs(netPnl).toLocaleString() + ' JPY';
+            netSpan.className = netPnl >= 0 ? 'font-bold text-red-400' : 'font-bold text-green-400';
+
+            document.getElementById('settle-peak-balance').innerText = '￥' + Math.floor(gameState.peakBalance).toLocaleString() + ' JPY';
+            
+            let lowestMarginSpan = document.getElementById('settle-lowest-margin');
+            if (gameState.lowestMarginRatio !== null) {
+                let lowVal = gameState.lowestMarginRatio;
+                lowestMarginSpan.innerText = lowVal.toFixed(1) + '%';
+                if (lowVal <= gameState.liqRatio) {
+                    lowestMarginSpan.className = 'font-bold text-red-500';
+                } else if (lowVal <= gameState.callRatio) {
+                    lowestMarginSpan.className = 'font-bold text-amber-400';
+                } else {
+                    lowestMarginSpan.className = 'text-gray-200';
+                }
+            } else {
+                lowestMarginSpan.innerText = '無持倉紀錄 (100.0%)';
+                lowestMarginSpan.className = 'text-gray-400';
+            }
+
+            document.getElementById('settle-peak-leverage').innerText = gameState.peakLeverageUsed + ' x';
+
+            let playSecs = Math.floor((Date.now() - gameState.startTime) / 1000);
+            let pMins = Math.floor(playSecs / 60);
+            let pSecs = playSecs % 60;
+            document.getElementById('settle-play-time').innerText = `${pMins} 分 ${pSecs} 秒`;
+
+            document.getElementById('settle-ext-float-win').innerText = '最高未實現利潤: ' + (gameState.extFloatWin ? `${gameState.extFloatWin.pair} (+￥${gameState.extFloatWin.val.toLocaleString()})` : '無');
+            document.getElementById('settle-ext-float-loss').innerText = '最高未實現損失: ' + (gameState.extFloatLoss ? `${gameState.extFloatLoss.pair} (￥${gameState.extFloatLoss.val.toLocaleString()})` : '無');
+            document.getElementById('settle-ext-real-win').innerText = '最高已實現利潤: ' + (gameState.extRealWin ? `${gameState.extRealWin.pair} (+￥${gameState.extRealWin.val.toLocaleString()})` : '無');
+            document.getElementById('settle-ext-real-loss').innerText = '最高已實現損失: ' + (gameState.extRealLoss ? `${gameState.extRealLoss.pair} (￥${gameState.extRealLoss.val.toLocaleString()})` : '無');
+        }
+
+        function restartGame() {
+            document.getElementById('settlement-modal').classList.add('hidden');
+            startGame();
+        }
+
+        function returnToMainMenu() {
+            document.getElementById('settlement-modal').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
+            resetToModeSelect();
+        }
+    </script>
+</body>
+</html>
