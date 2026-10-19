@@ -151,7 +151,7 @@
             <button onclick="toggleFullTutorial(true)" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-indigo-300 border border-gray-700 rounded-xl font-bold flex items-center gap-2 text-sm transition">
                 <span>❓</span> 完整教程
             </button>
-            <div class="text-xs text-gray-500 font-mono">v5.7 Continuous Open/Close Resampling Fix</div>
+            <div class="text-xs text-gray-500 font-mono">v5.9 Dynamic Technical Support/Resistance Engine</div>
         </div>
 
         <div class="text-center my-6">
@@ -500,7 +500,10 @@
             { text: "【黑天鵝】國際世紀級投資銀行驚傳資不抵債，連鎖倒閉危機蔓延！", target: "USD", dir: -1, pips: 160 },
             { text: "【黑天鵝】全球經濟泡沫破裂，華爾街觸發多次熔斷機制！", target: "USD", dir: -1, pips: 180 },
             { text: "【黑天鵝】主要產油國突發聯合無預警大幅減產，能源危機爆發！", target: "CAD", dir: 1, pips: 130 },
-            { text: "【黑天鵝】央行無預警實施超高強度負利率政策，匯率巨幅穿透走勢圖！", target: "JPY", dir: -1, pips: 170 }
+            { text: "【黑天鵝】央行無預警實施超高強度負利率政策，匯率巨幅穿透走勢圖！", target: "JPY", dir: -1, pips: 170 },
+            { text: "【黑天鵝】歐元區核心成員國突發主權債務違約危機，歐元遭恐慌性拋售！", target: "EUR", dir: -1, pips: 160 },
+            { text: "【黑天鵝】英國政府突發撤換內閣並推動激進政策，英鎊重挫觸發市場恐慌！", target: "GBP", dir: -1, pips: 150 },
+            { text: "【黑天鵝】亞太地區貿易戰全面升級，原物料出口受創引發澳幣暴跌！", target: "AUD", dir: -1, pips: 140 }
         ];
 
         const ASSISTANT_CONFIG = {
@@ -920,7 +923,7 @@
         }
 
         // ==========================================
-        // 獨立貨幣動量 + 隨機跳動 (3~10 Ticks) 物理引擎
+        // 獨立貨幣動量 + 支撐壓力位判斷 物理引擎
         // ==========================================
         let tickCounter = 0;
         let randomJumpCounter = 0;
@@ -971,7 +974,6 @@
             renderCanvasChart();
         }
 
-        // 核心修復：重組 K 線時確保開收盤價格絕對無縫銜接
         function resampleAllCandles() {
             let ticksPerCandle = gameState.candleIntervalSec * TPS;
 
@@ -986,7 +988,6 @@
                 for (let i = startIdx; i < ticks.length - (ticks.length % ticksPerCandle || ticksPerCandle); i += ticksPerCandle) {
                     let chunk = ticks.slice(i, i + ticksPerCandle);
                     if (chunk.length > 0) {
-                        // 強制第一根使用第一個 tick，後續根繼承上一根 close
                         let open = (lastClose !== null) ? lastClose : chunk[0];
                         let close = chunk[chunk.length - 1];
                         let high = Math.max(open, close, ...chunk);
@@ -1046,6 +1047,34 @@
                         currencyMomentums[base] = (Math.random() - 0.5) * 0.00025;
                     }
 
+                    // 🚀 技術面支撐/壓力位動態判斷與反彈/突破機制
+                    let currentBaseQuotePair = `${base}/JPY`;
+                    let cache = gameState.klineCaches[currentBaseQuotePair];
+                    if (cache && cache.history.length >= 10) {
+                        let recentLows = cache.history.slice(-20).map(c => c.low);
+                        let recentHighs = cache.history.slice(-20).map(c => c.high);
+                        let supportLevel = Math.min(...recentLows);
+                        let resistanceLevel = Math.max(...recentHighs);
+                        let currentPrice = BASE_RATES_JPY[base];
+
+                        // 1. 觸及技術支撐位 (距離小於 0.05%)
+                        if (currentPrice <= supportLevel * 1.0005) {
+                            if (Math.random() < 0.70) {
+                                currencyMomentums[base] += 0.0006; // 70% 逢低買盤湧入強勢反彈
+                            } else {
+                                currencyMomentums[base] -= 0.0010; // 30% 恐慌賣壓，順勢爆量跌破創新低！
+                            }
+                        } 
+                        // 2. 觸及技術壓力位 (距離小於 0.05%)
+                        else if (currentPrice >= resistanceLevel * 0.9995) {
+                            if (Math.random() < 0.70) {
+                                currencyMomentums[base] -= 0.0006; // 70% 遇壓吐回獲利賣盤回檔
+                            } else {
+                                currencyMomentums[base] += 0.0010; // 30% 強勢突破買盤衝破新高！
+                            }
+                        }
+                    }
+
                     let vol = CURRENCY_VOLATILITY[base] || 1.0;
                     let initRate = INITIAL_BASE_RATES[base];
                     let currentRate = BASE_RATES_JPY[base];
@@ -1090,7 +1119,6 @@
                     cache.history.push({ ...cache.current });
                     if (cache.history.length > 40) cache.history.shift();
                     
-                    // 核心修復：新 K 線的 open 必須等於上一根 K 線的 close
                     let nextOpen = cache.current.close;
                     cache.current = { open: nextOpen, high: nextOpen, low: nextOpen, close: nextOpen };
                 });
